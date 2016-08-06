@@ -227,16 +227,28 @@ bool ethash_cuda_miner::init(uint8_t const* _dag, uint64_t _dagSize, unsigned _d
 		uint32_t dagSize128 = (unsigned)(_dagSize / ETHASH_MIX_BYTES);
 
 		// create buffer for dag
+		size_t mfree,mtotal;
+		CUDA_SAFE_CALL(cudaMemGetInfo(&mfree,&mtotal));
+		cout << "CUDA mem free " << mfree << "/" << mtotal << endl;
+		cout << "Creating DAG buffer of size " << _dagSize << endl;
+		
 		hash128_t * dag;
 		CUDA_SAFE_CALL(cudaMalloc(reinterpret_cast<void**>(&dag), _dagSize));
 		// copy dag to CPU.
 		CUDA_SAFE_CALL(cudaMemcpy(reinterpret_cast<void*>(dag), _dag, _dagSize, cudaMemcpyHostToDevice));
 
 		// create mining buffers
+
+
+		cout << "Creating mining buffers " << endl;
 		for (unsigned i = 0; i != s_numStreams; ++i)
 		{
-			CUDA_SAFE_CALL(cudaMallocHost(&m_search_buf[i], SEARCH_RESULT_BUFFER_SIZE * sizeof(uint32_t)));
-			CUDA_SAFE_CALL(cudaStreamCreate(&m_streams[i]));
+		  cout << "Creating mining buffer " << i;
+		CUDA_SAFE_CALL(cudaMemGetInfo(&mfree,&mtotal));
+		cout << "CUDA mem free " << mfree << "/" << mtotal << endl;
+		  cout << " size " << SEARCH_RESULT_BUFFER_SIZE * sizeof(uint32_t) << endl;
+		  CUDA_SAFE_CALL(cudaMallocHost(&m_search_buf[i], SEARCH_RESULT_BUFFER_SIZE * sizeof(uint32_t)));
+		  CUDA_SAFE_CALL(cudaStreamCreate(&m_streams[i]));
 		}
 		set_constants(dag, dagSize128);
 		memset(&m_current_header, 0, sizeof(hash32_t));
